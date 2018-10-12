@@ -5,7 +5,7 @@
   var instancesCount = 0;
   var ticking = false;
 
-  var EVENT_NAME = 'window-scroll';
+  var EVENT_NAME = 'scrollTarget-scroll';
 
   // ------------------------------------------------
   // Passive events support detection
@@ -55,10 +55,20 @@
   // ------------------------------------------------
   // Scroll manager
   // ------------------------------------------------
-  function ScrollManager() {
-    if (typeof window === 'undefined') {
-      // Silently return null if it is used on server
-      return null;
+  function ScrollManager(element) {
+    
+    var scrollTarget;
+
+    // check if an element was passed and we can add an event listener,
+    // otherwise default to window
+    if (element && typeof element.addEventListener === 'function') {
+      scrollTarget = element;
+    } else {
+      if (typeof window === 'undefined') {
+        // Silently return null if it is used on server
+        return null;
+      }
+      scrollTarget = window;
     }
 
     // Increase reference count
@@ -79,7 +89,7 @@
     this.eventListenerOptions = supportsPassiveEvents ? { passive: true } : true;
 
     // Add scroll listener
-    window.addEventListener('scroll', this.handleScroll, this.eventListenerOptions);
+    scrollTarget.addEventListener('scroll', this.handleScroll, this.eventListenerOptions);
   }
 
   ScrollManager.prototype.removeListener = function() {
@@ -93,7 +103,7 @@
 
   ScrollManager.prototype.destroy = function() {
     // Remove event listener
-    window.removeEventListener('scroll', this.handleScroll, this.eventListenerOptions);
+    scrollTarget.removeEventListener('scroll', this.handleScroll, this.eventListenerOptions);
 
     // Clear singleton instance and count
     instance = null;
@@ -102,8 +112,8 @@
 
   ScrollManager.prototype.getScrollPosition = function() {
     // Get scroll position, with IE fallback
-    var scrollPositionY = window.scrollY || document.documentElement.scrollTop;
-    var scrollPositionX = window.scrollX || document.documentElement.scrollLeft;
+    var scrollPositionY = scrollTarget.scrollY || scrollTarget.scrollTop;
+    var scrollPositionX = scrollTarget.scrollX || scrollTarget.scrollLeft;
 
     // Disable overscrolling in safari
     if (scrollPositionY < 0) {
